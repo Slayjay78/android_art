@@ -82,11 +82,8 @@ public class Main {
 
   native int stackmap(int x);
 
-  static {
-    System.loadLibrary("arttest");
-  }
-
-  public static void main(String[] args) {
+  public static void main(String[] args) throws Exception {
+    System.loadLibrary(args[0]);
     Main st = new Main();
     st.f();
   }

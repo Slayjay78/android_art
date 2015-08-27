@@ -48,13 +48,10 @@ public class Main {
 
   static native void doStaticNativeCallLiveVreg();
 
-  static {
-    System.loadLibrary("arttest");
-  }
-
   public static void main(String[] args) {
-    if (testLiveArgument(42) != 42) {
-      throw new Error("Expected 42");
+    System.loadLibrary(args[0]);
+    if (testLiveArgument(staticField3) != staticField3) {
+      throw new Error("Expected " + staticField3);
     }
 
     if (testLiveArgument(42) != 42) {
