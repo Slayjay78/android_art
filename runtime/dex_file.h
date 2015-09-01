@@ -1050,6 +1050,8 @@ class DexFile {
   // pointer to the OatDexFile it was loaded from. Otherwise oat_dex_file_ is
   // null.
   const OatDexFile* oat_dex_file_;
+
+  friend class DexFileVerifierTest;
 };
 
 struct DexFileReference {
@@ -1233,6 +1235,9 @@ class ClassDataItemIterator {
   }
   uint32_t GetMethodCodeItemOffset() const {
     return method_.code_off_;
+  }
+  const uint8_t* DataPointer() const {
+    return ptr_pos_;
   }
   const uint8_t* EndDataPointer() const {
     CHECK(!HasNext());
