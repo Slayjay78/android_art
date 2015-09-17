@@ -19,9 +19,11 @@ if [ ! -d libcore ]; then
   exit 1
 fi
 
-# Jar containing all the tests.
-test_jar=out/target/common/obj/JAVA_LIBRARIES/core-tests_intermediates/javalib.jar
+# Jar containing jsr166 tests.
+jsr166_test_jar=${OUT_DIR-out}/target/common/obj/JAVA_LIBRARIES/jsr166-tests_intermediates/javalib.jar
 
+# Jar containing all the other tests.
+test_jar=${OUT_DIR-out}/target/common/obj/JAVA_LIBRARIES/core-tests_intermediates/javalib.jar
 if [ ! -f $test_jar ]; then
   echo "Before running, you must build core-tests and vogar: make core-tests vogar vogar.jar"
   exit 1
