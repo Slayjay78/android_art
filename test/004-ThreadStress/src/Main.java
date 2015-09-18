@@ -429,17 +429,30 @@ public class Main implements Runnable {
                     int id = threadStress.id;
                     System.out.println("Starting worker for " + id);
                     while (threadStress.nextOperation < operationsPerThread) {
-                        Thread thread = new Thread(ts, "Worker thread " + id);
-                        thread.start();
                         try {
-                            thread.join();
-                        } catch (InterruptedException e) {
+                            Thread thread = new Thread(ts, "Worker thread " + id);
+                            thread.start();
+                            try {
+                                thread.join();
+                            } catch (InterruptedException e) {
+                            }
+
+                            System.out.println("Thread exited for " + id + " with "
+                                               + (operationsPerThread - threadStress.nextOperation)
+                                               + " operations remaining.");
+                        } catch (OutOfMemoryError e) {
+                            // Ignore OOME since we need to print "Finishing worker" for the test
+                            // to pass.
                         }
-                        System.out.println("Thread exited for " + id + " with "
-                                           + (operationsPerThread - threadStress.nextOperation)
-                                           + " operations remaining.");
                     }
-                    System.out.println("Finishing worker");
+                    // Keep trying to print "Finishing worker" until it succeeds.
+                    while (true) {
+                        try {
+                            System.out.println("Finishing worker");
+                            break;
+                        } catch (OutOfMemoryError e) {
+                        }
+                    }
                 }
             };
         }
