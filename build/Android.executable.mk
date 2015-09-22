@@ -83,6 +83,20 @@ define build-art-executable
       LOCAL_CFLAGS += $(ART_HOST_NON_DEBUG_CFLAGS)
     endif
     LOCAL_LDLIBS += -lpthread -ldl
+    ifeq ($$(art_static_or_shared),static)
+      LOCAL_LDFLAGS += -static
+      # We need this because GC stress mode makes use of _Unwind_GetIP and _Unwind_Backtrace and
+      # the symbols are also defined in libgcc_eh.a(unwind-dw2.o)
+      # TODO: Having this is not ideal as it might obscure errors. Try to get rid of it.
+      LOCAL_LDFLAGS += -z muldefs
+      ifeq ($$(HOST_OS),linux)
+        LOCAL_LDLIBS += -lrt -lncurses -ltinfo
+      endif
+      ifeq ($$(HOST_OS),darwin)
+        LOCAL_LDLIBS += -lncurses -ltinfo
+      endif
+    endif
+
   endif
 
   ifeq ($$(art_ndebug_or_debug),ndebug)
