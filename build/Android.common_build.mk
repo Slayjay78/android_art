@@ -30,22 +30,9 @@ include art/build/Android.common_utils.mk
 # Beware that tests may use the non-debug build for performance, notable 055-enum-performance
 #
 ART_BUILD_TARGET_NDEBUG ?= true
-ART_BUILD_TARGET_DEBUG ?= true
+ART_BUILD_TARGET_DEBUG ?= false
 ART_BUILD_HOST_NDEBUG ?= true
-ART_BUILD_HOST_DEBUG ?= true
-
-ifeq ($(ART_BUILD_TARGET_NDEBUG),false)
-$(info Disabling ART_BUILD_TARGET_NDEBUG)
-endif
-ifeq ($(ART_BUILD_TARGET_DEBUG),false)
-$(info Disabling ART_BUILD_TARGET_DEBUG)
-endif
-ifeq ($(ART_BUILD_HOST_NDEBUG),false)
-$(info Disabling ART_BUILD_HOST_NDEBUG)
-endif
-ifeq ($(ART_BUILD_HOST_DEBUG),false)
-$(info Disabling ART_BUILD_HOST_DEBUG)
-endif
+ART_BUILD_HOST_DEBUG ?= false
 
 #
 # Used to enable JIT
@@ -110,36 +97,9 @@ ART_TARGET_CLANG_CFLAGS_x86_64 :=
 ART_TARGET_CLANG_CFLAGS_arm64  += \
   -DNVALGRIND
 
-# Warn about thread safety violations with clang.
-art_clang_cflags := -Wthread-safety
-
-# Warn if switch fallthroughs aren't annotated.
-art_clang_cflags += -Wimplicit-fallthrough
-
-# Enable float equality warnings.
-art_clang_cflags += -Wfloat-equal
-
-# Enable warning of converting ints to void*.
-art_clang_cflags += -Wint-to-void-pointer-cast
-
-# Enable warning of wrong unused annotations.
-art_clang_cflags += -Wused-but-marked-unused
-
-# Enable warning for deprecated language features.
-art_clang_cflags += -Wdeprecated
-
-# Enable warning for unreachable break & return.
-art_clang_cflags += -Wunreachable-code-break -Wunreachable-code-return
-
-# Enable missing-noreturn only on non-Mac. As lots of things are not implemented for Apple, it's
-# a pain.
-ifneq ($(HOST_OS),darwin)
-  art_clang_cflags += -Wmissing-noreturn
-endif
-
 
 # GCC-only warnings.
-art_gcc_cflags := -Wunused-but-set-parameter
+# art_gcc_cflags := -Wunused-but-set-parameter
 # Suggest const: too many false positives, but good for a trial run.
 #                  -Wsuggest-attribute=const
 # Useless casts: too many, as we need to be 32/64 agnostic, but the compiler knows.
@@ -186,7 +146,6 @@ ART_C_INCLUDES := \
 art_cflags := \
   -fno-rtti \
   -std=gnu++11 \
-  -ggdb3 \
   -Wall \
   -Werror \
   -Wextra \
@@ -211,9 +170,7 @@ else
   art_cflags += -DIMT_SIZE=64
 endif
 
-ifeq ($(ART_USE_OPTIMIZING_COMPILER),true)
-  art_cflags += -DART_USE_OPTIMIZING_COMPILER=1
-endif
+art_cflags += -DART_USE_OPTIMIZING_COMPILER=1
 
 ifeq ($(ART_HEAP_POISONING),true)
   art_cflags += -DART_HEAP_POISONING=1
@@ -232,11 +189,7 @@ art_non_debug_cflags := \
   -O3
 
 # Cflags for debug ART and ART tools.
-art_debug_cflags := \
-  -O2 \
-  -DDYNAMIC_ANNOTATIONS_ENABLED=1 \
-  -DVIXL_DEBUG \
-  -UNDEBUG
+art_debug_cflags := $(art_non_debug_cflags)
 
 art_host_non_debug_cflags := $(art_non_debug_cflags)
 art_target_non_debug_cflags := $(art_non_debug_cflags)
