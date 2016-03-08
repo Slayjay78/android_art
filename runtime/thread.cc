@@ -546,6 +546,18 @@ Thread* Thread::Attach(const char* thread_name, bool as_daemon, jobject thread_g
   // a native peer!
   if (create_peer) {
     self->CreatePeer(thread_name, as_daemon, thread_group);
+    if (self->IsExceptionPending()) {
+      // We cannot keep the exception around, as we're deleting self. Try to be helpful and log it.
+      {
+        ScopedObjectAccess soa(self);
+        LOG(ERROR) << "Exception creating thread peer:";
+        LOG(ERROR) << self->GetException()->Dump();
+        self->ClearException();
+      }
+      runtime->GetThreadList()->Unregister(self);
+      // Unregister deletes self, no need to do this here.
+      return nullptr;
+    }
   } else {
     // These aren't necessary, but they improve diagnostics for unit tests & command-line tools.
     if (thread_name != nullptr) {
@@ -594,7 +606,9 @@ void Thread::CreatePeer(const char* name, bool as_daemon, jobject thread_group) 
                                 WellKnownClasses::java_lang_Thread,
                                 WellKnownClasses::java_lang_Thread_init,
                                 thread_group, thread_name.get(), thread_priority, thread_is_daemon);
-  AssertNoPendingException();
+  if (IsExceptionPending()) {
+    return;
+  }
 
   Thread* self = this;
   DCHECK_EQ(self, Thread::Current());
@@ -1256,6 +1270,7 @@ void Thread::FinishStartup() {
   // Finish attaching the main thread.
   ScopedObjectAccess soa(Thread::Current());
   Thread::Current()->CreatePeer("main", false, runtime->GetMainThreadGroup());
+  Thread::Current()->AssertNoPendingException();
 
   Runtime::Current()->GetClassLinker()->RunRootClinits();
 }
@@ -2360,8 +2375,7 @@ class ReferenceMapVisitor : public StackVisitor {
         // Can't be null or how would we compile its instructions?
         DCHECK(code_item != nullptr) << PrettyMethod(m);
         NativePcOffsetToReferenceMap map(native_gc_map);
-        size_t num_regs = std::min(map.RegWidth() * 8,
-                                   static_cast<size_t>(code_item->registers_size_));
+        size_t num_regs = map.RegWidth() * 8;
         if (num_regs > 0) {
           Runtime* runtime = Runtime::Current();
           const void* entry_point = runtime->GetInstrumentation()->GetQuickCodeFor(m, sizeof(void*));

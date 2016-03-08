@@ -28,6 +28,6 @@ public class Main {
         WrappedThrow.main(null);
         NarrowingTest.main(null);
         FloatSelect.main(null);
-        NativeProxy.main(args);
+        NativeProxy.main(null);
     }
 }
